@@ -1,14 +1,7 @@
-# Use a public base image
-FROM python:3.9-slim
+FROM python:3.9-slim  # Pulls from JFrog remote repo if configured
 
-# Set the working directory
 WORKDIR /app
+COPY src/app /app
+RUN pip install flask
 
-# Copy application files
-COPY src/ /app/
-
-# Install dependencies
-RUN pip install --no-cache-dir requests
-
-# Set entrypoint
 CMD ["python", "app.py"]
