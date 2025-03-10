@@ -1,4 +1,4 @@
-FROM python:3.9-slim  # Pulls from JFrog remote repo if configured
+FROM python:3.9-slim  
 
 WORKDIR /app
 COPY src/app /app
