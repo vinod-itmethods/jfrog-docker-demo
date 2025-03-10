@@ -1,0 +1,52 @@
+name: Docker Build and Push to Artifactory
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read  
+  id-token: write  
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          chmod +x jfrog
+          mv jfrog /usr/local/bin/
+
+      - name: Authenticate JFrog CLI Using Access Token
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: |
+          export JFROG_CLI_OFFER_CONFIG=false
+          jfrog config add my-artifactory \
+            --url=https://artifactory.stage.0658b-techopscore.com \
+            --access-token=$JFROG_TOKEN \
+            --interactive=false
+
+      - name: Configure Docker Login for Artifactory
+        env:
+          DOCKER_REGISTRY: artifactory.stage.0658b-techopscore.com/artifactory/docker-appcode-dev
+        run: |
+          echo ${{ secrets.JFROG_TOKEN }} | docker login $DOCKER_REGISTRY --username ${{ secrets.JFROG_USER }} --password-stdin
+
+      - name: Build Docker Image
+        env:
+          DOCKER_REGISTRY: artifactory.stage.0658b-techopscore.com/artifactory/docker-appcode-dev
+        run: |
+          docker build -t $DOCKER_REGISTRY/docker-demo:latest .
+
+      - name: Push Docker Image to Artifactory
+        env:
+          DOCKER_REGISTRY: artifactory.stage.0658b-techopscore.com/artifactory/docker-appcode-dev
+        run: |
+          docker push $DOCKER_REGISTRY/docker-demo:latest
